@@ -6,11 +6,13 @@ RUN git clone https://github.com/ToTheBeginning/PuLID.git /pulid
 WORKDIR /pulid
 
 RUN pip install \
-    diffusers==0.30.0 transformers==4.43.3 optimum-quanto==0.2.4 \
+    diffusers==0.30.0 transformers==4.43.3 \
     opencv-python-headless httpx==0.23.3 timm einops ftfy \
     facexlib insightface onnxruntime \
-    accelerate sentencepiece safetensors \
+    accelerate sentencepiece safetensors torchsde \
     runpod --no-cache-dir
+
+RUN pip install optimum-quanto==0.2.4 --no-deps --no-cache-dir
 
 ENV HF_HOME=/models/hf_cache
 
