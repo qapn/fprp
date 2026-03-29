@@ -65,6 +65,7 @@ def load():
     print("[init] PuLID...", flush=True)
     pulid = PuLIDPipeline(dit, "cpu", torch.bfloat16, onnx_provider="cpu")
     pulid.load_pretrain(version="v0.9.1")
+    pulid.device = torch.device("cuda")
 
     print("[init] Ready.", flush=True)
 
