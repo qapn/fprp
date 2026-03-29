@@ -19,20 +19,24 @@ def _load_flux_fp8():
     from flux.model import Flux
     from flux.util import configs
 
-    ckpt = hf_hub_download("XLabs-AI/flux-dev-fp8", "flux-dev-fp8.safetensors")
+    ckpt = hf_hub_download("Comfy-Org/flux1-dev", "flux1-dev-fp8.safetensors")
 
     with torch.device("meta"):
         model = Flux(configs["flux-dev"].params)
 
     sd = load_file(ckpt, device="cpu")
+    prefix = "model.diffusion_model."
+    sd = {k[len(prefix):]: v for k, v in sd.items() if k.startswith(prefix)}
     model.load_state_dict(sd, strict=False, assign=True)
     del sd
 
     for module in model.modules():
-        if isinstance(module, torch.nn.Linear) and module.weight.dtype == torch.float8_e4m3fn:
+        if isinstance(module, torch.nn.Linear):
             def _make_wrapper(mod):
                 def forward(x):
-                    return torch.nn.functional.linear(x, mod.weight.to(x.dtype), mod.bias)
+                    w = mod.weight.to(x.dtype)
+                    b = mod.bias.to(x.dtype) if mod.bias is not None else None
+                    return torch.nn.functional.linear(x, w, b)
                 return forward
             module.forward = _make_wrapper(module)
 
