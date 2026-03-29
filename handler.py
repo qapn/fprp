@@ -12,15 +12,42 @@ pulid = None
 INIT_ERROR = None
 
 
+def _load_flux_fp8():
+    import torch
+    from huggingface_hub import hf_hub_download
+    from safetensors.torch import load_file
+    from flux.model import Flux
+    from flux.util import configs
+
+    ckpt = hf_hub_download("XLabs-AI/flux-dev-fp8", "flux-dev-fp8.safetensors")
+
+    with torch.device("meta"):
+        model = Flux(configs["flux-dev"].params)
+
+    sd = load_file(ckpt, device="cpu")
+    model.load_state_dict(sd, strict=False, assign=True)
+    del sd
+
+    for module in model.modules():
+        if isinstance(module, torch.nn.Linear) and module.weight.dtype == torch.float8_e4m3fn:
+            def _make_wrapper(mod):
+                def forward(x):
+                    return torch.nn.functional.linear(x, mod.weight.to(x.dtype), mod.bias)
+                return forward
+            module.forward = _make_wrapper(module)
+
+    return model
+
+
 def load():
     global dit, t5, clip_model, ae, pulid
 
     import torch
-    from flux.util import load_ae, load_clip, load_flow_model_quintized, load_t5
+    from flux.util import load_ae, load_clip, load_t5
     from pulid.pipeline_flux import PuLIDPipeline
 
     print("[init] Flux FP8...", flush=True)
-    dit = load_flow_model_quintized("flux-dev", "cpu")
+    dit = _load_flux_fp8()
 
     print("[init] T5...", flush=True)
     t5 = load_t5("cpu", max_length=128)
@@ -28,7 +55,7 @@ def load():
     print("[init] CLIP...", flush=True)
     clip_model = load_clip("cpu")
 
-    print("[init] VAE (black-forest-labs/FLUX.1-dev, ~335MB)...", flush=True)
+    print("[init] VAE...", flush=True)
     ae = load_ae("flux-dev", "cpu")
 
     print("[init] PuLID...", flush=True)
