@@ -119,11 +119,11 @@ def handler(job):
 
     width = int(inp.get("width", 1024))
     height = int(inp.get("height", 1024))
-    steps = int(inp.get("steps", 20))
+    steps = int(inp.get("steps", 28))
     start_step = int(inp.get("start_step", 0))
     guidance = float(inp.get("guidance", 4.0))
     seed = int(inp.get("seed", -1))
-    id_weight = float(inp.get("pulid_weight", 0.9))
+    id_weight = float(inp.get("pulid_weight", 1.0))
     neg_prompt = inp.get("negative_prompt", "")
     true_cfg = float(inp.get("true_cfg", 1.0))
     timestep_to_start_cfg = int(inp.get("timestep_to_start_cfg", 1))
