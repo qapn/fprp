@@ -60,7 +60,19 @@ def load():
     clip_model = load_clip("cpu")
 
     print("[init] VAE...", flush=True)
-    ae = load_ae("flux-dev", "cpu")
+    from huggingface_hub import hf_hub_download
+    from safetensors.torch import load_file as load_sft
+    from flux.modules.autoencoder import AutoEncoder
+    from flux.util import configs
+    vae_sd = load_sft(
+        hf_hub_download("Comfy-Org/flux1-dev", "flux1-dev-fp8.safetensors"),
+        device="cpu",
+    )
+    vae_prefix = "vae."
+    vae_sd = {k[len(vae_prefix):]: v.to(torch.bfloat16) for k, v in vae_sd.items() if k.startswith(vae_prefix)}
+    ae = AutoEncoder(configs["flux-dev"].ae_params)
+    ae.load_state_dict(vae_sd, strict=False)
+    del vae_sd
 
     print("[init] PuLID...", flush=True)
     pulid = PuLIDPipeline(dit, "cpu", torch.bfloat16, onnx_provider="cpu")
