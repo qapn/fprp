@@ -151,11 +151,13 @@ def handler(job):
             )
             face_np = resize_numpy_image_long(face_np, 1024)
 
-            pulid.components_to_device(device)
+            pulid.clip_vision_model.to(device)
+            pulid.pulid_encoder.to(device)
             id_emb, uncond_id_emb = pulid.get_id_embedding(
                 face_np, cal_uncond=(true_cfg > 1.0)
             )
-            pulid.components_to_device("cpu")
+            pulid.clip_vision_model.to("cpu")
+            pulid.pulid_encoder.to("cpu")
             torch.cuda.empty_cache()
 
             dit.to(device)
@@ -213,7 +215,8 @@ def handler(job):
         clip_model.to("cpu")
         dit.to("cpu")
         ae.to("cpu")
-        pulid.components_to_device("cpu")
+        pulid.clip_vision_model.to("cpu")
+        pulid.pulid_encoder.to("cpu")
         torch.cuda.empty_cache()
 
 
