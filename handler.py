@@ -39,6 +39,10 @@ def _load_flux_fp8():
                     return torch.nn.functional.linear(x, w, b)
                 return forward
             module.forward = _make_wrapper(module)
+        else:
+            for param in module.parameters(recurse=False):
+                if param.dtype == torch.float8_e4m3fn:
+                    param.data = param.data.to(torch.bfloat16)
 
     return model
 
